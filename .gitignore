@@ -1,0 +1,5 @@
+results/
+trained_models/
+trained_extractors/
+wandb/
+/pycache/*
