@@ -30,8 +30,8 @@ class AttentiveProjector(torch.nn.Module):
                  dropout=0.1,
                  use_gate=True,
                  learn_stats=True,
-                 init_text_mean=0.0007, 
-                 init_text_std=0.1168):
+                 init_mean=0.0007, 
+                 init_std=0.1168):
         """
         Enhanced projector with multi-head attention, temporal modeling, and learnable statistics.
         """
@@ -67,11 +67,11 @@ class AttentiveProjector(torch.nn.Module):
         # Statistics for normalization - learnable or fixed
         self.learn_stats = learn_stats
         if learn_stats:
-            self.text_mean = torch.nn.Parameter(torch.tensor(init_text_mean))
-            self.text_std = torch.nn.Parameter(torch.tensor(init_text_std))
+            self.video_mean = torch.nn.Parameter(torch.tensor(init_mean))
+            self.video_std = torch.nn.Parameter(torch.tensor(init_std))
         else:
-            self.register_buffer("text_mean", torch.tensor(init_text_mean))
-            self.register_buffer("text_std", torch.tensor(init_text_std))
+            self.register_buffer("video_mean", torch.tensor(init_mean))
+            self.register_buffer("video_std", torch.tensor(init_std))
         
     def forward(self, video_feats):  # (B, V, D)
         B, V, D = video_feats.shape
@@ -118,8 +118,8 @@ class AttentiveProjector(torch.nn.Module):
         video_emb = video_emb / (video_emb.std(dim=-1, keepdim=True) + 1e-6)
         
         # Apply learned/fixed text statistics
-        video_emb = video_emb * self.text_std
-        video_emb = video_emb + self.text_mean
+        video_emb = video_emb * self.video_std
+        video_emb = video_emb + self.video_mean
         
         return video_emb
 
@@ -209,8 +209,8 @@ class VideoClassifier(PreTrainedModel):
                 
         # LoRA configuration for TimesFormer
         lora_config = LoraConfig(
-            r=16,
-            lora_alpha=32,
+            r=64,
+            lora_alpha=128,
             lora_dropout=0.1,
             bias="none",
             target_modules=target_modules
@@ -220,11 +220,11 @@ class VideoClassifier(PreTrainedModel):
         self.vision_encoder = get_peft_model(self.vision_encoder, lora_config)
         self.vision_encoder.gradient_checkpointing_enable()
         
-        self.projector = VideoProjector(
+        self.projector = AttentiveProjector(
             input_dim=768,
-            hidden_dim=1024,
+            hidden_dim=2560,
             out_dim=768,
-            num_heads=12,
+            num_heads=16,
             use_gate=True,
             learn_stats=True
         )
@@ -354,10 +354,8 @@ class VideoClassifier(PreTrainedModel):
         # Reshape to separate batch and views
         pooled_output = pooled_output.reshape(B, V, -1)  # (B, V, 768)
         
-        projected = self.projector(pooled_output) # (B, D)
-        
-        # Average over the views
-        # pooled_output = pooled_output.mean(dim=1)  # (B, 768)
+        # Apply projector
+        projected = self.projector(pooled_output) # (B, 768)
         
         # Classification
         logits = self.classifier(projected)  # (B, num_classes)
@@ -368,28 +366,6 @@ class VideoClassifier(PreTrainedModel):
             loss = loss_fn(logits, labels)
         
         return {"loss": loss, "logits": logits} if loss is not None else {"logits": logits}
-    
-    def feature_extract(self, pixel_values):
-        """Extract features without classification, for use as a feature extractor."""
-        B, V, T, C, H, W = pixel_values.shape
-        
-        # Reshape to combine batch and views
-        pixel_values = pixel_values.reshape(B * V, T, C, H, W)
-        
-        # Extract features
-        with torch.no_grad():
-            outputs = self.vision_encoder(pixel_values=pixel_values)
-        
-        # Pooling: mean over the sequence dimension
-        pooled_output = outputs.last_hidden_state.mean(dim=1)  # (B*V, 768)
-        
-        # Reshape to separate batch and views
-        pooled_output = pooled_output.reshape(B, V, -1)  # (B, V, 768)
-        
-        # Average over the views
-        pooled_output = pooled_output.mean(dim=1)  # (B, 768)
-        
-        return pooled_output
 
 class VideoDataset(torch.utils.data.Dataset):
     """Dataset for video classification."""
@@ -510,58 +486,62 @@ def sample_frame_indices(clip_len, frame_sample_rate, seg_len):
     indices = np.clip(indices, start_idx, end_idx - 1).astype(np.int64)
     return indices
 
-def save_feature_extractor(model, output_dir):
-    """Save the model as a feature extractor (without classification head)."""
+def save_complete_model(model, output_dir):
+    """Save the complete model including vision encoder with LoRA, projector, and classifier."""
     os.makedirs(output_dir, exist_ok=True)
     
-    # Save vision encoder with LoRA
+    # Save model config
+    model.config.save_pretrained(output_dir)
+    
+    # Save vision encoder with LoRA weights
     model.vision_encoder.save_pretrained(os.path.join(output_dir, "vision_encoder"))
     
     # Save image processor
     model.image_processor.save_pretrained(os.path.join(output_dir, "image_processor"))
     
-    # Save configuration
-    config = {
-        "vision_encoder_id": model.config.vision_encoder_id,
-        "num_frames": model.num_frames,
-        "num_classes": model.num_classes,
-        "num_views": model.num_views
+    # Save projector and classifier components as part of state_dict
+    components_path = os.path.join(output_dir, "components.pt")
+    components_state_dict = {
+        "projector": model.projector.state_dict(),
+        "classifier": model.classifier.state_dict()
     }
+    torch.save(components_state_dict, components_path)
     
-    with open(os.path.join(output_dir, "config.json"), 'w') as f:
-        json.dump(config, f, indent=2)
-    
-    print(f"Feature extractor successfully saved to {output_dir}")
+    print(f"Complete model successfully saved to {output_dir}")
 
-def load_feature_extractor(model_dir, device="auto"):
-    """Load the model as a feature extractor."""
-    # Load configuration
-    with open(os.path.join(model_dir, "config.json"), 'r') as f:
-        config = json.load(f)
+def load_complete_model(model_dir, device="auto"):
+    """Load the complete model including vision encoder with LoRA, projector, and classifier."""
+    if device == "auto":
+        device = DEVICE
     
-    # Create model config
-    model_config = VideoClassifierConfig(
-        vision_encoder_id=config["vision_encoder_id"],
-        num_frames=config["num_frames"],
-        num_classes=config["num_classes"],
-        num_views=config["num_views"]
-    )
+    # Load model config
+    config = VideoClassifierConfig.from_pretrained(model_dir)
     
-    # Initialize model
-    model = VideoClassifier(model_config)
+    # Initialize model with the config
+    model = VideoClassifier(config)
     
-    # Load vision encoder with LoRA weights
+    # Load vision encoder with LoRA
     model.vision_encoder = PeftModel.from_pretrained(
         model.vision_encoder, 
         os.path.join(model_dir, "vision_encoder")
     )
     
-    # Load image processor
+    # Load projector and classifier components
+    components_path = os.path.join(model_dir, "components.pt")
+    components_state_dict = torch.load(components_path, map_location=device)
+    
+    model.projector.load_state_dict(components_state_dict["projector"])
+    model.classifier.load_state_dict(components_state_dict["classifier"])
+    
+    # Load the image processor
     model.image_processor = AutoImageProcessor.from_pretrained(
         os.path.join(model_dir, "image_processor")
     )
     
-    print(f"Feature extractor successfully loaded from {model_dir}")
+    # Move model to device
+    model = model.to(device)
+    
+    print(f"Complete model successfully loaded from {model_dir}")
     return model
 
 def train(args):
@@ -579,11 +559,11 @@ def train(args):
     )
     
     eval_dataset = VideoDataset(
-        args.test_annotation_path,
+        args.val_annotation_path,
         args.camera_indices,
         args.video_root,
         args.num_frames
-    ) if args.test_annotation_path else None
+    ) if args.val_annotation_path else None
     
     # Create model
     config = VideoClassifierConfig(
@@ -619,7 +599,10 @@ def train(args):
         gradient_accumulation_steps=args.gradient_accumulation_steps,
         dataloader_pin_memory=True,
         torch_empty_cache_steps=4,
+        dataloader_num_workers=4,
         optim=args.optim,
+        #torch_compile=True,
+        #torch_compile_backend="inductor",
     )
     
     # Create trainer
@@ -635,8 +618,8 @@ def train(args):
     # Train
     trainer.train()
     
-    # Save model
-    save_feature_extractor(model, args.output_dir)
+    # Save complete model
+    save_complete_model(model, args.output_dir)
     
     # Push to hub if requested
     if args.push_to_hub:
@@ -646,12 +629,9 @@ def train(args):
 
 def inference(args, model=None):
     """Run inference on test dataset."""
-    global max_views
-    max_views = max(len(args.camera_indices), 1)
-    
     # Load model if not provided
     if model is None:
-        model = load_feature_extractor(args.model_path)
+        model = load_complete_model(args.model_path)
         model.to(DEVICE)
         model.eval()
     
@@ -680,6 +660,9 @@ def inference(args, model=None):
     
     with torch.no_grad():
         for batch in test_loader:
+            if batch is None:
+                continue
+                
             pixel_values = batch["pixel_values"].to(DEVICE)
             labels = batch["labels"].to(DEVICE)
             
@@ -694,11 +677,27 @@ def inference(args, model=None):
     accuracy = accuracy_score(all_labels, all_preds)
     print(f"Test accuracy: {accuracy:.4f}")
     
+    # Also print predicted class distribution
+    unique_preds, counts = np.unique(all_preds, return_counts=True)
+    print("Predicted class distribution:")
+    for class_idx, count in zip(unique_preds, counts):
+        print(f"  Class {class_idx}: {count} samples ({count/len(all_preds)*100:.2f}%)")
+    
+    # Save predictions to file
+    predictions_path = os.path.join(os.path.dirname(args.model_path) if args.model_path else args.output_dir, "predictions.txt")
+    with open(predictions_path, 'w') as f:
+        f.write("true_label,predicted_label\n")
+        for true_label, pred_label in zip(all_labels, all_preds):
+            f.write(f"{true_label},{pred_label}\n")
+    
+    print(f"Predictions saved to {predictions_path}")
+    
     return accuracy
 
 def main():
     parser = argparse.ArgumentParser(description="Video Classification with TimesFormer and LoRA")
     parser.add_argument("--train_annotation_path", type=str, help="Path to the train dataset annotation file (JSONL format)")
+    parser.add_argument("--val_annotation_path", type=str, help="Path to the validation dataset annotation file (JSONL format)")
     parser.add_argument("--test_annotation_path", type=str, help="Path to the test dataset annotation file (JSONL format)")
     parser.add_argument("--video_root", type=str, help="Path to the root directory containing video files")
     parser.add_argument("--camera_indices", nargs='+', type=int, default=[0], help="Indices of camera views to use")
@@ -723,10 +722,6 @@ def main():
     parser.add_argument("--model_path", type=str, help="Path to the model directory for inference")
     
     args = parser.parse_args()
-    
-    # Set global max_views
-    global max_views
-    max_views = max(len(args.camera_indices), 1)
     
     model = None
     
