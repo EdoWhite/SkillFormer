@@ -21,6 +21,108 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 VISION_ENCODER = "facebook/timesformer-base-finetuned-k600"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+class AttentiveProjector(torch.nn.Module):
+    def __init__(self, 
+                 input_dim=768, 
+                 hidden_dim=1024, 
+                 out_dim=576, 
+                 num_heads=4,
+                 dropout=0.1,
+                 use_gate=True,
+                 learn_stats=True,
+                 init_text_mean=0.0007, 
+                 init_text_std=0.1168):
+        """
+        Enhanced projector with multi-head attention, temporal modeling, and learnable statistics.
+        """
+        super().__init__()
+        
+        # Multi-head attention for view integration
+        self.view_norm = torch.nn.LayerNorm(input_dim)
+        self.view_attn = torch.nn.MultiheadAttention(
+            embed_dim=input_dim,
+            num_heads=num_heads,
+            dropout=dropout,
+            batch_first=True
+        )
+        
+        # Feature transformation
+        self.proj1 = torch.nn.Linear(input_dim, hidden_dim)
+        self.act = torch.nn.GELU()
+        self.norm1 = torch.nn.LayerNorm(hidden_dim)
+        self.dropout = torch.nn.Dropout(dropout)
+        
+        # Gating mechanism
+        self.use_gate = use_gate
+        if use_gate:
+            self.gate = torch.nn.Sequential(
+                torch.nn.Linear(hidden_dim, hidden_dim),
+                torch.nn.Sigmoid()
+            )
+            
+        # Final projection to LLM dimension
+        self.proj2 = torch.nn.Linear(hidden_dim, out_dim)
+        self.norm_final = torch.nn.LayerNorm(out_dim)
+        
+        # Statistics for normalization - learnable or fixed
+        self.learn_stats = learn_stats
+        if learn_stats:
+            self.text_mean = torch.nn.Parameter(torch.tensor(init_text_mean))
+            self.text_std = torch.nn.Parameter(torch.tensor(init_text_std))
+        else:
+            self.register_buffer("text_mean", torch.tensor(init_text_mean))
+            self.register_buffer("text_std", torch.tensor(init_text_std))
+        
+    def forward(self, video_feats):  # (B, V, D)
+        B, V, D = video_feats.shape
+        
+        # Apply layer norm to input
+        video_feats = self.view_norm(video_feats)
+        
+        # Multi-head self-attention across views
+        # Each view attends to all other views
+        attn_output, _ = self.view_attn(
+            query=video_feats,
+            key=video_feats,
+            value=video_feats
+        )
+        
+        # Average pooling across views (can be learned by attention)
+        fused_feats = attn_output.mean(dim=1)  # (B, D)
+        
+        # First projection
+        hidden = self.proj1(fused_feats)  # (B, hidden_dim)
+        hidden = self.act(hidden)
+        hidden = self.norm1(hidden)
+        hidden = self.dropout(hidden)
+        
+        # Apply gating if enabled
+        if self.use_gate:
+            gate_values = self.gate(hidden)
+            hidden = hidden * gate_values
+            
+        # Final projection and normalization
+        output = self.proj2(hidden)  # (B, out_dim)
+        output = self.norm_final(output)
+        
+        # Normalize to match text embedding statistics
+        output = self.normalize_to_text_stats(output)
+        
+        return output
+    
+    def normalize_to_text_stats(self, video_emb):
+        # Center to zero mean
+        video_emb = video_emb - video_emb.mean(dim=-1, keepdim=True)
+        
+        # Scale to unit variance 
+        video_emb = video_emb / (video_emb.std(dim=-1, keepdim=True) + 1e-6)
+        
+        # Apply learned/fixed text statistics
+        video_emb = video_emb * self.text_std
+        video_emb = video_emb + self.text_mean
+        
+        return video_emb
+
 class VideoProcessor(ProcessorMixin):
     attributes = ["image_processor"]
     image_processor_class = ("BaseImageProcessor",)
@@ -117,6 +219,15 @@ class VideoClassifier(PreTrainedModel):
         # Apply LoRA to vision encoder
         self.vision_encoder = get_peft_model(self.vision_encoder, lora_config)
         self.vision_encoder.gradient_checkpointing_enable()
+        
+        self.projector = VideoProjector(
+            input_dim=768,
+            hidden_dim=1024,
+            out_dim=768,
+            num_heads=12,
+            use_gate=True,
+            learn_stats=True
+        )
         
         # Classification head
         self.classifier = torch.nn.Linear(768, self.num_classes)
@@ -243,11 +354,13 @@ class VideoClassifier(PreTrainedModel):
         # Reshape to separate batch and views
         pooled_output = pooled_output.reshape(B, V, -1)  # (B, V, 768)
         
+        projected = self.projector(pooled_output) # (B, D)
+        
         # Average over the views
-        pooled_output = pooled_output.mean(dim=1)  # (B, 768)
+        # pooled_output = pooled_output.mean(dim=1)  # (B, 768)
         
         # Classification
-        logits = self.classifier(pooled_output)  # (B, num_classes)
+        logits = self.classifier(projected)  # (B, num_classes)
         
         loss = None
         if labels is not None:
