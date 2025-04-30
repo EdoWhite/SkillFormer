@@ -209,8 +209,8 @@ class VideoClassifier(PreTrainedModel):
                 
         # LoRA configuration for TimesFormer
         lora_config = LoraConfig(
-            r=64,
-            lora_alpha=128,
+            r=80,
+            lora_alpha=160,
             lora_dropout=0.1,
             bias="none",
             target_modules=target_modules
@@ -224,7 +224,7 @@ class VideoClassifier(PreTrainedModel):
             input_dim=768,
             hidden_dim=2560,
             out_dim=768,
-            num_heads=16,
+            num_heads=24,
             use_gate=True,
             learn_stats=True
         )
