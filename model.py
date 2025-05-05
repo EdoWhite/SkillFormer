@@ -5,7 +5,7 @@ import os
 import json
 import numpy as np
 from functools import partial
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix
 from PIL import Image
 from transformers.processing_utils import ProcessorMixin
 from transformers.tokenization_utils import BatchEncoding
@@ -163,6 +163,11 @@ class VideoClassifierConfig(PretrainedConfig):
         num_frames=16,
         num_classes=4,
         num_views=1,
+        lora_r=32,
+        lora_alpha=64,
+        lora_dropout=0.1,
+        projector_hidden_dim=1536,
+        projector_num_heads=16,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -170,6 +175,11 @@ class VideoClassifierConfig(PretrainedConfig):
         self.num_frames = num_frames
         self.num_classes = num_classes
         self.num_views = num_views
+        self.lora_r = lora_r
+        self.lora_alpha = lora_alpha
+        self.lora_dropout = lora_dropout
+        self.projector_hidden_dim = projector_hidden_dim
+        self.projector_num_heads = projector_num_heads
 
 class VideoClassifier(PreTrainedModel):
     """Video classification model using TimesFormer with LoRA fine-tuning."""
@@ -209,9 +219,9 @@ class VideoClassifier(PreTrainedModel):
                 
         # LoRA configuration for TimesFormer
         lora_config = LoraConfig(
-            r=80,
-            lora_alpha=160,
-            lora_dropout=0.1,
+            r=config.lora_r,
+            lora_alpha=config.lora_alpha,
+            lora_dropout=config.lora_dropout,
             bias="none",
             target_modules=target_modules
         )
@@ -222,9 +232,9 @@ class VideoClassifier(PreTrainedModel):
         
         self.projector = AttentiveProjector(
             input_dim=768,
-            hidden_dim=2560,
+            hidden_dim=config.projector_hidden_dim,
             out_dim=768,
-            num_heads=24,
+            num_heads=config.projector_num_heads,
             use_gate=True,
             learn_stats=True
         )
@@ -570,7 +580,12 @@ def train(args):
         vision_encoder_id=VISION_ENCODER,
         num_frames=args.num_frames,
         num_classes=4,  # Fixed number of classes
-        num_views=max_views
+        num_views=max_views,
+        lora_r=args.lora_r,
+        lora_alpha=args.lora_alpha,
+        lora_dropout=args.lora_dropout,
+        projector_hidden_dim=args.projector_hidden_dim,
+        projector_num_heads=args.projector_num_heads
     )
     
     model = VideoClassifier(config)
@@ -628,7 +643,7 @@ def train(args):
     return model
 
 def inference(args, model=None):
-    """Run inference on test dataset."""
+    """Run inference on test dataset with per-scenario accuracy reporting."""
     # Load model if not provided
     if model is None:
         model = load_complete_model(args.model_path)
@@ -657,9 +672,14 @@ def inference(args, model=None):
     # Run inference
     all_preds = []
     all_labels = []
+    all_scenarios = []
+    
+    # Load the original annotations to extract scenario information
+    with open(args.test_annotation_path) as f:
+        annotations = [json.loads(line) for line in f if all(k in json.loads(line) for k in ["video_paths", "proficiency_level"])]
     
     with torch.no_grad():
-        for batch in test_loader:
+        for i, batch in enumerate(test_loader):
             if batch is None:
                 continue
                 
@@ -670,29 +690,118 @@ def inference(args, model=None):
             logits = outputs["logits"]
             preds = torch.argmax(logits, dim=-1)
             
-            all_preds.extend(preds.cpu().numpy())
-            all_labels.extend(labels.cpu().numpy())
+            # Get current batch predictions and labels
+            current_preds = preds.cpu().numpy()
+            current_labels = labels.cpu().numpy()
+            
+            # Append to overall lists
+            all_preds.extend(current_preds)
+            all_labels.extend(current_labels)
+            
+            # Extract scenarios for the current batch
+            for j in range(len(current_preds)):
+                # Calculate the index in the original dataset
+                idx = i * args.batch_size + j
+                if idx < len(annotations):
+                    # Extract scenario from video_paths
+                    try:
+                        video_path = annotations[idx]["video_paths"][0]  # Use the first camera view
+                        # Extract scenario from path
+                        for scenario in ["basketball", "cooking", "dance", "music", "bouldering", "soccer"]:
+                            if scenario in video_path:
+                                all_scenarios.append(scenario)
+                                break
+                        else:  # If no known scenario found
+                            all_scenarios.append("unknown")
+                    except (IndexError, KeyError) as e:
+                        print(f"Error extracting scenario: {str(e)}")
+                        all_scenarios.append("unknown")
     
-    # Compute accuracy
-    accuracy = accuracy_score(all_labels, all_preds)
-    print(f"Test accuracy: {accuracy:.4f}")
+    # Compute overall accuracy
+    overall_accuracy = accuracy_score(all_labels, all_preds)
+    print(f"Overall test accuracy: {overall_accuracy:.4f}")
     
-    # Also print predicted class distribution
+    # Compute per-scenario accuracy
+    scenarios = ["basketball", "cooking", "dance", "music", "bouldering", "soccer", "unknown"]
+    print("\nPer-scenario accuracy:")
+    
+    for scenario in scenarios:
+        # Get indices for this scenario
+        scenario_indices = [i for i, s in enumerate(all_scenarios) if s == scenario]
+        
+        if not scenario_indices:
+            print(f"  {scenario}: No samples found")
+            continue
+            
+        # Extract predictions and labels for this scenario
+        scenario_preds = [all_preds[i] for i in scenario_indices]
+        scenario_labels = [all_labels[i] for i in scenario_indices]
+        
+        # Calculate accuracy
+        scenario_accuracy = accuracy_score(scenario_labels, scenario_preds)
+        print(f"  {scenario}: {scenario_accuracy:.4f} ({len(scenario_indices)} samples)")
+        
+        # Print per-class performance for this scenario
+        class_names = ["Novice", "Early Expert", "Intermediate Expert", "Late Expert"]
+        
+        # Convert lists to numpy arrays for easier manipulation
+        scenario_preds_np = np.array(scenario_preds)
+        scenario_labels_np = np.array(scenario_labels)
+        
+        # Print per-class accuracy for this scenario
+        print(f"    Per-class performance:")
+        for class_idx, class_name in enumerate(class_names):
+            # Find indices where the true label is this class
+            class_indices = np.where(scenario_labels_np == class_idx)[0]
+            if len(class_indices) > 0:
+                # Calculate accuracy for this class
+                class_correct = np.sum(scenario_preds_np[class_indices] == class_idx)
+                class_accuracy = class_correct / len(class_indices)
+                print(f"      {class_name}: {class_accuracy:.4f} ({class_correct}/{len(class_indices)})")
+            else:
+                print(f"      {class_name}: No samples found")
+    
+    # Print overall per-class performance
+    print("\nOverall per-class performance:")
+    class_names = ["Novice", "Early Expert", "Intermediate Expert", "Late Expert"]
+    all_labels_np = np.array(all_labels)
+    all_preds_np = np.array(all_preds)
+    
+    for class_idx, class_name in enumerate(class_names):
+        class_indices = np.where(all_labels_np == class_idx)[0]
+        if len(class_indices) > 0:
+            class_correct = np.sum(all_preds_np[class_indices] == class_idx)
+            class_accuracy = class_correct / len(class_indices)
+            print(f"  {class_name}: {class_accuracy:.4f} ({class_correct}/{len(class_indices)})")
+        else:
+            print(f"  {class_name}: No samples found")
+            
+    # Print overall predicted class distribution
+    print("\nOverall predicted class distribution:")
     unique_preds, counts = np.unique(all_preds, return_counts=True)
-    print("Predicted class distribution:")
     for class_idx, count in zip(unique_preds, counts):
-        print(f"  Class {class_idx}: {count} samples ({count/len(all_preds)*100:.2f}%)")
+        class_name = class_names[class_idx] if class_idx < len(class_names) else f"Unknown class {class_idx}"
+        print(f"  {class_name}: {count} samples ({count/len(all_preds)*100:.2f}%)")
+    
+    # Create a confusion matrix
+    cm = confusion_matrix(all_labels, all_preds)
+    print("\nConfusion Matrix:")
+    print("  " + " ".join(f"{name[:7]:>7s}" for name in class_names))
+    for i, row in enumerate(cm):
+        print(f"{class_names[i][:7]:>7s} " + " ".join(f"{cell:>7d}" for cell in row))
     
     # Save predictions to file
-    predictions_path = os.path.join(os.path.dirname(args.model_path) if args.model_path else args.output_dir, "predictions.txt")
+    """
+    predictions_path = os.path.join(os.path.dirname(args.model_path) if args.model_path else args.output_dir, "predictions.csv")
     with open(predictions_path, 'w') as f:
-        f.write("true_label,predicted_label\n")
-        for true_label, pred_label in zip(all_labels, all_preds):
-            f.write(f"{true_label},{pred_label}\n")
+        f.write("true_label,predicted_label,scenario\n")
+        for true_label, pred_label, scenario in zip(all_labels, all_preds, all_scenarios):
+            f.write(f"{true_label},{pred_label},{scenario}\n")
     
-    print(f"Predictions saved to {predictions_path}")
+    print(f"\nPredictions saved to {predictions_path}")
+    """
     
-    return accuracy
+    return overall_accuracy
 
 def main():
     parser = argparse.ArgumentParser(description="Video Classification with TimesFormer and LoRA")
@@ -702,6 +811,15 @@ def main():
     parser.add_argument("--video_root", type=str, help="Path to the root directory containing video files")
     parser.add_argument("--camera_indices", nargs='+', type=int, default=[0], help="Indices of camera views to use")
     parser.add_argument("--num_frames", type=int, default=16, help="Number of frames to sample from each video")
+    
+    # LoRA parameters
+    parser.add_argument("--lora_r", type=int, default=32, help="LoRA rank parameter")
+    parser.add_argument("--lora_alpha", type=int, default=64, help="LoRA alpha parameter")
+    parser.add_argument("--lora_dropout", type=float, default=0.1, help="LoRA dropout rate")
+    
+    # Projector parameters
+    parser.add_argument("--projector_hidden_dim", type=int, default=1536, help="Hidden dimension of the projector")
+    parser.add_argument("--projector_num_heads", type=int, default=16, help="Number of attention heads in projector")
     
     parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs")
     parser.add_argument("--batch_size", type=int, default=4, help="Batch size per device during training")
