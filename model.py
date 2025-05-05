@@ -6,6 +6,8 @@ import json
 import numpy as np
 from functools import partial
 from sklearn.metrics import accuracy_score, confusion_matrix
+import types
+from collections import defaultdict
 from PIL import Image
 from transformers.processing_utils import ProcessorMixin
 from transformers.tokenization_utils import BatchEncoding
@@ -521,20 +523,112 @@ def save_complete_model(model, output_dir):
 
 def load_complete_model(model_dir, device="auto"):
     """Load the complete model including vision encoder with LoRA, projector, and classifier."""
+    import types  # Make sure this is imported
+    
     if device == "auto":
         device = DEVICE
     
     # Load model config
     config = VideoClassifierConfig.from_pretrained(model_dir)
     
-    # Initialize model with the config
-    model = VideoClassifier(config)
+    # Initialize base vision encoder
+    vision_encoder = TimesformerModel.from_pretrained(
+        config.vision_encoder_id,
+        torch_dtype=torch.float16,
+    )
     
-    # Load vision encoder with LoRA
-    model.vision_encoder = PeftModel.from_pretrained(
-        model.vision_encoder, 
+    # Handle time embeddings directly instead of using temporary model
+    if config.num_frames != 8:
+        print(f"Interpolating time embeddings from 8 to {config.num_frames} frames")
+        
+        # Direct access to time_embeddings
+        if hasattr(vision_encoder, 'embeddings') and hasattr(vision_encoder.embeddings, 'time_embeddings'):
+            time_embeddings = vision_encoder.embeddings.time_embeddings
+            print("Found time_embeddings at vision_encoder.embeddings.time_embeddings")
+            orig_size = time_embeddings.shape
+            print(f"Original time embeddings shape: {orig_size}")
+            
+            # Create new embeddings with target frame count
+            if len(orig_size) == 2:
+                hidden_dim = orig_size[1]
+                orig_frames = orig_size[0]
+                new_time_embeddings = torch.nn.Parameter(
+                    torch.zeros(config.num_frames, hidden_dim),
+                    requires_grad=True
+                )
+            else:  # len(orig_size) == 3
+                hidden_dim = orig_size[2]
+                orig_frames = orig_size[1]
+                new_time_embeddings = torch.nn.Parameter(
+                    torch.zeros(1, config.num_frames, hidden_dim),
+                    requires_grad=True
+                )
+            
+            # Calculate scaling factors
+            scale = config.num_frames / orig_frames
+            
+            # Apply linear interpolation
+            if len(orig_size) == 2:
+                for t in range(config.num_frames):
+                    # Find the corresponding position in original embeddings
+                    orig_t = min(t / scale, orig_frames - 1)
+                    # Get the integer positions for interpolation
+                    t_floor = int(orig_t)
+                    t_ceil = min(t_floor + 1, orig_frames - 1)
+                    # Calculate the fractional part for weighting
+                    t_frac = orig_t - t_floor
+                    
+                    # Linear interpolation
+                    new_time_embeddings.data[t] = (1 - t_frac) * time_embeddings.data[t_floor] + t_frac * time_embeddings.data[t_ceil]
+            else:  # len(orig_size) == 3
+                for t in range(config.num_frames):
+                    # Find the corresponding position in original embeddings
+                    orig_t = min(t / scale, orig_frames - 1)
+                    # Get the integer positions for interpolation
+                    t_floor = int(orig_t)
+                    t_ceil = min(t_floor + 1, orig_frames - 1)
+                    # Calculate the fractional part for weighting
+                    t_frac = orig_t - t_floor
+                    
+                    # Linear interpolation
+                    new_time_embeddings.data[0, t] = (1 - t_frac) * time_embeddings.data[0, t_floor] + t_frac * time_embeddings.data[0, t_ceil]
+            
+            # Replace the original embeddings with the new ones
+            vision_encoder.embeddings.time_embeddings = new_time_embeddings
+            print(f"Time embeddings interpolated from {orig_frames} to {config.num_frames} frames")
+    
+    # Load the LoRA adapter directly onto the base vision encoder
+    vision_encoder = PeftModel.from_pretrained(
+        vision_encoder, 
         os.path.join(model_dir, "vision_encoder")
     )
+    
+    # Create a model instance without LoRA
+    model = VideoClassifier.__new__(VideoClassifier)
+    PreTrainedModel.__init__(model, config)  # Initialize as PreTrainedModel without calling VideoClassifier.__init__
+    
+    # Set the loaded vision encoder
+    model.vision_encoder = vision_encoder
+    model.num_views = config.num_views
+    model.num_frames = config.num_frames
+    model.num_classes = config.num_classes
+    
+    # Load the image processor
+    model.image_processor = AutoImageProcessor.from_pretrained(
+        os.path.join(model_dir, "image_processor")
+    )
+    
+    # Initialize projector and classifier without weights (will be loaded below)
+    model.projector = AttentiveProjector(
+        input_dim=768,
+        hidden_dim=config.projector_hidden_dim,
+        out_dim=768,
+        num_heads=config.projector_num_heads,
+        use_gate=True,
+        learn_stats=True
+    )
+    
+    model.classifier = torch.nn.Linear(768, model.num_classes)
     
     # Load projector and classifier components
     components_path = os.path.join(model_dir, "components.pt")
@@ -543,13 +637,12 @@ def load_complete_model(model_dir, device="auto"):
     model.projector.load_state_dict(components_state_dict["projector"])
     model.classifier.load_state_dict(components_state_dict["classifier"])
     
-    # Load the image processor
-    model.image_processor = AutoImageProcessor.from_pretrained(
-        os.path.join(model_dir, "image_processor")
-    )
+    # Move model to device and convert ALL parameters to fp16 for consistency
+    model = model.to(device).to(torch.float16)
     
-    # Move model to device
-    model = model.to(device)
+    # Add forward method if it's missing during this custom initialization
+    if not hasattr(model, 'forward'):
+        model.forward = types.MethodType(VideoClassifier.forward, model)
     
     print(f"Complete model successfully loaded from {model_dir}")
     return model
@@ -642,8 +735,10 @@ def train(args):
     
     return model
 
-def inference(args, model=None):
-    """Run inference on test dataset with per-scenario accuracy reporting."""
+def inference_old(args, model=None):
+    """Run inference on test dataset."""
+    import types  # Add this import at the top of your file
+    
     # Load model if not provided
     if model is None:
         model = load_complete_model(args.model_path)
@@ -672,136 +767,217 @@ def inference(args, model=None):
     # Run inference
     all_preds = []
     all_labels = []
-    all_scenarios = []
     
-    # Load the original annotations to extract scenario information
+    # Determine if the model is using half precision
+    is_half_precision = any(p.dtype == torch.float16 for p in model.parameters())
+    
+    with torch.no_grad():
+        for batch in test_loader:
+            if batch is None:
+                continue
+                
+            # Convert pixel_values to the correct dtype based on model parameters
+            pixel_values = batch["pixel_values"].to(DEVICE)
+            if is_half_precision:
+                pixel_values = pixel_values.to(torch.float16)
+            
+            labels = batch["labels"].to(DEVICE)
+            
+            try:
+                outputs = model(pixel_values=pixel_values)
+                logits = outputs["logits"]
+                preds = torch.argmax(logits, dim=-1)
+                
+                all_preds.extend(preds.cpu().numpy())
+                all_labels.extend(labels.cpu().numpy())
+            except RuntimeError as e:
+                # If we get a dtype error, try the opposite precision
+                if "expected scalar type" in str(e) and "but found" in str(e):
+                    print(f"Caught dtype error, trying alternative precision...")
+                    if is_half_precision:
+                        pixel_values = pixel_values.to(torch.float32)
+                    else:
+                        pixel_values = pixel_values.to(torch.float16)
+                    
+                    outputs = model(pixel_values=pixel_values)
+                    logits = outputs["logits"]
+                    preds = torch.argmax(logits, dim=-1)
+                    
+                    all_preds.extend(preds.cpu().numpy())
+                    all_labels.extend(labels.cpu().numpy())
+                else:
+                    # Re-raise if it's not a dtype error
+                    raise
+    
+    # Compute accuracy
+    accuracy = accuracy_score(all_labels, all_preds)
+    print(f"Test accuracy: {accuracy:.4f}")
+    
+    # Also print predicted class distribution
+    unique_preds, counts = np.unique(all_preds, return_counts=True)
+    print("Predicted class distribution:")
+    for class_idx, count in zip(unique_preds, counts):
+        print(f"  Class {class_idx}: {count} samples ({count/len(all_preds)*100:.2f}%)")
+    
+    # Save predictions to file
+    predictions_path = os.path.join(os.path.dirname(args.model_path) if args.model_path else args.output_dir, "predictions.txt")
+    with open(predictions_path, 'w') as f:
+        f.write("true_label,predicted_label\n")
+        for true_label, pred_label in zip(all_labels, all_preds):
+            f.write(f"{true_label},{pred_label}\n")
+    
+    print(f"Predictions saved to {predictions_path}")
+    
+    return accuracy
+
+def inference(args, model=None):
+    """Run inference on test dataset and calculate accuracy per scenario."""    
+    # Load model if not provided
+    if model is None:
+        model = load_complete_model(args.model_path)
+        model.to(DEVICE)
+        model.eval()
+    
+    # Create test dataset
+    test_dataset = VideoDataset(
+        args.test_annotation_path,
+        args.camera_indices,
+        args.video_root,
+        args.num_frames
+    )
+    
+    # Create video processor
+    video_processor = VideoProcessor(model.image_processor)
+    
+    # Create dataloader
+    collate_partial = partial(collate_fn, video_processor=video_processor)
+    test_loader = torch.utils.data.DataLoader(
+        test_dataset,
+        batch_size=args.batch_size,
+        collate_fn=collate_partial
+    )
+    
+    # Load annotations to get scenarios
     with open(args.test_annotation_path) as f:
         annotations = [json.loads(line) for line in f if all(k in json.loads(line) for k in ["video_paths", "proficiency_level"])]
+    
+    # Run inference
+    all_preds = []
+    all_labels = []
+    all_scenarios = []
+    
+    # Determine if the model is using half precision
+    is_half_precision = any(p.dtype == torch.float16 for p in model.parameters())
     
     with torch.no_grad():
         for i, batch in enumerate(test_loader):
             if batch is None:
                 continue
                 
+            # Convert pixel_values to the correct dtype based on model parameters
             pixel_values = batch["pixel_values"].to(DEVICE)
+            if is_half_precision:
+                pixel_values = pixel_values.to(torch.float16)
+            
             labels = batch["labels"].to(DEVICE)
             
-            outputs = model(pixel_values=pixel_values)
-            logits = outputs["logits"]
-            preds = torch.argmax(logits, dim=-1)
-            
-            # Get current batch predictions and labels
-            current_preds = preds.cpu().numpy()
-            current_labels = labels.cpu().numpy()
-            
-            # Append to overall lists
-            all_preds.extend(current_preds)
-            all_labels.extend(current_labels)
-            
-            # Extract scenarios for the current batch
-            for j in range(len(current_preds)):
-                # Calculate the index in the original dataset
-                idx = i * args.batch_size + j
-                if idx < len(annotations):
-                    # Extract scenario from video_paths
-                    try:
-                        video_path = annotations[idx]["video_paths"][0]  # Use the first camera view
-                        # Extract scenario from path
-                        for scenario in ["basketball", "cooking", "dance", "music", "bouldering", "soccer"]:
-                            if scenario in video_path:
-                                all_scenarios.append(scenario)
+            try:
+                outputs = model(pixel_values=pixel_values)
+                logits = outputs["logits"]
+                preds = torch.argmax(logits, dim=-1)
+                
+                all_preds.extend(preds.cpu().numpy())
+                all_labels.extend(labels.cpu().numpy())
+                
+                # Extract scenarios for this batch
+                batch_indices = range(i * args.batch_size, min((i + 1) * args.batch_size, len(test_dataset)))
+                for idx in batch_indices:
+                    if idx < len(annotations):
+                        # Extract scenario from video_path
+                        video_path = annotations[idx]["video_paths"][0]  # Use first camera
+                        # Expected format: "takes/uniandes_dance_007_5/frame_aligned_videos/aria01_214-1.mp4"
+                        path_parts = video_path.split('/')
+                        scenario_found = False
+                        for part in path_parts:
+                            for scenario in ["basketball", "cooking", "dance", "bouldering", "soccer"]:
+                                if scenario in part:
+                                    all_scenarios.append(scenario)
+                                    scenario_found = True
+                                    break
+                            if scenario_found:
                                 break
-                        else:  # If no known scenario found
-                            all_scenarios.append("unknown")
-                    except (IndexError, KeyError) as e:
-                        print(f"Error extracting scenario: {str(e)}")
-                        all_scenarios.append("unknown")
+                        
+                        # If no matching scenario was found, classify as "music"
+                        if not scenario_found:
+                            all_scenarios.append("music")
+            except RuntimeError as e:
+                # If we get a dtype error, try the opposite precision
+                if "expected scalar type" in str(e) and "but found" in str(e):
+                    print(f"Caught dtype error, trying alternative precision...")
+                    if is_half_precision:
+                        pixel_values = pixel_values.to(torch.float32)
+                    else:
+                        pixel_values = pixel_values.to(torch.float16)
+                    
+                    outputs = model(pixel_values=pixel_values)
+                    logits = outputs["logits"]
+                    preds = torch.argmax(logits, dim=-1)
+                    
+                    all_preds.extend(preds.cpu().numpy())
+                    all_labels.extend(labels.cpu().numpy())
+                    # Need to also add scenarios for this batch
+                    batch_indices = range(i * args.batch_size, min((i + 1) * args.batch_size, len(test_dataset)))
+                    for idx in batch_indices:
+                        if idx < len(annotations):
+                            video_path = annotations[idx]["video_paths"][0]
+                            path_parts = video_path.split('/')
+                            scenario_found = False
+                            for part in path_parts:
+                                for scenario in ["basketball", "cooking", "dance", "bouldering", "soccer"]:
+                                    if scenario in part:
+                                        all_scenarios.append(scenario)
+                                        scenario_found = True
+                                        break
+                                if scenario_found:
+                                    break
+                            
+                            # If no matching scenario was found, classify as "music"
+                            if not scenario_found:
+                                all_scenarios.append("music")
+                else:
+                    # Re-raise if it's not a dtype error
+                    raise
+    
+    # Ensure that we have the same number of predictions, labels, and scenarios
+    assert len(all_preds) == len(all_labels) == len(all_scenarios), \
+        f"Mismatch in data counts: preds={len(all_preds)}, labels={len(all_labels)}, scenarios={len(all_scenarios)}"
     
     # Compute overall accuracy
     overall_accuracy = accuracy_score(all_labels, all_preds)
     print(f"Overall test accuracy: {overall_accuracy:.4f}")
     
-    # Compute per-scenario accuracy
-    scenarios = ["basketball", "cooking", "dance", "music", "bouldering", "soccer", "unknown"]
-    print("\nPer-scenario accuracy:")
+    # Compute accuracy per scenario
+    scenario_preds = defaultdict(list)
+    scenario_labels = defaultdict(list)
     
-    for scenario in scenarios:
-        # Get indices for this scenario
-        scenario_indices = [i for i, s in enumerate(all_scenarios) if s == scenario]
-        
-        if not scenario_indices:
-            print(f"  {scenario}: No samples found")
-            continue
-            
-        # Extract predictions and labels for this scenario
-        scenario_preds = [all_preds[i] for i in scenario_indices]
-        scenario_labels = [all_labels[i] for i in scenario_indices]
-        
-        # Calculate accuracy
-        scenario_accuracy = accuracy_score(scenario_labels, scenario_preds)
-        print(f"  {scenario}: {scenario_accuracy:.4f} ({len(scenario_indices)} samples)")
-        
-        # Print per-class performance for this scenario
-        class_names = ["Novice", "Early Expert", "Intermediate Expert", "Late Expert"]
-        
-        # Convert lists to numpy arrays for easier manipulation
-        scenario_preds_np = np.array(scenario_preds)
-        scenario_labels_np = np.array(scenario_labels)
-        
-        # Print per-class accuracy for this scenario
-        print(f"    Per-class performance:")
-        for class_idx, class_name in enumerate(class_names):
-            # Find indices where the true label is this class
-            class_indices = np.where(scenario_labels_np == class_idx)[0]
-            if len(class_indices) > 0:
-                # Calculate accuracy for this class
-                class_correct = np.sum(scenario_preds_np[class_indices] == class_idx)
-                class_accuracy = class_correct / len(class_indices)
-                print(f"      {class_name}: {class_accuracy:.4f} ({class_correct}/{len(class_indices)})")
-            else:
-                print(f"      {class_name}: No samples found")
+    for pred, label, scenario in zip(all_preds, all_labels, all_scenarios):
+        scenario_preds[scenario].append(pred)
+        scenario_labels[scenario].append(label)
     
-    # Print overall per-class performance
-    print("\nOverall per-class performance:")
-    class_names = ["Novice", "Early Expert", "Intermediate Expert", "Late Expert"]
-    all_labels_np = np.array(all_labels)
-    all_preds_np = np.array(all_preds)
+    print("\nAccuracy by scenario:")
+    scenario_accuracies = {}
+    for scenario in sorted(scenario_preds.keys()):
+        scenario_acc = accuracy_score(scenario_labels[scenario], scenario_preds[scenario])
+        scenario_accuracies[scenario] = scenario_acc
+        print(f"  {scenario.capitalize()}: {scenario_acc:.4f} ({len(scenario_preds[scenario])} samples)")
     
-    for class_idx, class_name in enumerate(class_names):
-        class_indices = np.where(all_labels_np == class_idx)[0]
-        if len(class_indices) > 0:
-            class_correct = np.sum(all_preds_np[class_indices] == class_idx)
-            class_accuracy = class_correct / len(class_indices)
-            print(f"  {class_name}: {class_accuracy:.4f} ({class_correct}/{len(class_indices)})")
-        else:
-            print(f"  {class_name}: No samples found")
-            
-    # Print overall predicted class distribution
+    # Also print predicted class distribution
     print("\nOverall predicted class distribution:")
     unique_preds, counts = np.unique(all_preds, return_counts=True)
     for class_idx, count in zip(unique_preds, counts):
-        class_name = class_names[class_idx] if class_idx < len(class_names) else f"Unknown class {class_idx}"
-        print(f"  {class_name}: {count} samples ({count/len(all_preds)*100:.2f}%)")
+        print(f"  Class {class_idx}: {count} samples ({count/len(all_preds)*100:.2f}%)")
     
-    # Create a confusion matrix
-    cm = confusion_matrix(all_labels, all_preds)
-    print("\nConfusion Matrix:")
-    print("  " + " ".join(f"{name[:7]:>7s}" for name in class_names))
-    for i, row in enumerate(cm):
-        print(f"{class_names[i][:7]:>7s} " + " ".join(f"{cell:>7d}" for cell in row))
-    
-    # Save predictions to file
-    """
-    predictions_path = os.path.join(os.path.dirname(args.model_path) if args.model_path else args.output_dir, "predictions.csv")
-    with open(predictions_path, 'w') as f:
-        f.write("true_label,predicted_label,scenario\n")
-        for true_label, pred_label, scenario in zip(all_labels, all_preds, all_scenarios):
-            f.write(f"{true_label},{pred_label},{scenario}\n")
-    
-    print(f"\nPredictions saved to {predictions_path}")
-    """
-    
-    return overall_accuracy
+    return overall_accuracy, scenario_accuracies
 
 def main():
     parser = argparse.ArgumentParser(description="Video Classification with TimesFormer and LoRA")
