@@ -15,22 +15,6 @@
   - Learnable Gating Mechanisms 🚪
   - Adaptive Calibration for Dynamic View Weighting 🎛️
 
-## 🏗️ Architecture Overview
-
-```
-Video Inputs (multiple views)
-        ↓
- [TimeSformer + LoRA]
-        ↓
-View-Specific Features
-        ↓
- Attentive Projector (Cross-Attn + Gating + Calibration)
-        ↓
- Fused Representation
-        ↓
-  Proficiency Score 📝
-```
-
 ---
 
 ## 🔧 Fine-Tuning Data
@@ -41,13 +25,7 @@ The model is fine-tuned on the [EgoExo4D](https://ego-exo4d-data.org) dataset, s
 
 ## 📁 Project Structure
 
-- `main.py`: Entry point for the training pipeline
-- `model.py`: Defines `SportVLM`, tokenizer, LoRA setup, forward logic
-- `processor.py`: `VideoTextProcessor` for image/text input
-- `dataset.py`: `VideoTextDataset`, `collate_fn`
-- `utils.py`: Video loading utilities (PyAV)
-- `train.py`: Training loop, custom loss function, and custom metrics
-- `inference.py`: Entry point for generation utilities
+- `model.py`: Defines `SkillFormere`
 - `annotation/prepare_annotation.py`: Prepares data annotations in `.jsonl` format
 
 ---
