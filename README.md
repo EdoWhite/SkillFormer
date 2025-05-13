@@ -13,7 +13,7 @@
   A custom fusion module that integrates view-specific video features using:
   - Multi-Head Cross-Attention 🧩
   - Learnable Gating Mechanisms 🚪
-  - Adaptive Calibration for Dynamic View Weighting 🎛️
+  - Adaptive Sel-Calibration for Dynamic View Weighting 🎛️
 
 ---
 
@@ -37,15 +37,14 @@ First get access to the dataset and install the required download utilities, fol
 Second, download the required set of data using the following command:
 
 ```bash
-egoexo -o ./EgoExoData --benchmarks proficiency_demonstrator --parts downscaled_takes/448 expert_commentary annotations -y
+egoexo -o ./EgoExoData --benchmarks proficiency_demonstrator --parts downscaled_takes/448 annotations -y
 ```
 
-Finbally, run the following command to prepare the annotations for training:
+Finbally, run the following command to prepare the annotations for training and validation:
 
 ```bash
 python prepare_annotation.py \
-  --video_dir path/to/videos \
-  --metadata path/to/raw_annotations.json \
+  --annotation path/to/raw_annotations.json \
   --output path/to/annotations.jsonl
 ```
 
@@ -53,14 +52,14 @@ python prepare_annotation.py \
 ```bash
 python model.py \
     --do_train \
-    --train_annotation_path /data/users/edbianchi/ProfiVLM/annotations/annotation_train.jsonl \
-    --val_annotation_path /data/users/edbianchi/ProfiVLM/annotations/annotation_val.jsonl \
-    --test_annotation_path /data/users/edbianchi/ProfiVLM/annotations/annotation_test.jsonl \
+    --train_annotation_path annotation_train.jsonl \
+    --val_annotation_path annotation_val.jsonl \
+    --test_annotation_path annotation_test.jsonl \
     --video_root /data/users/edbianchi/EgoExoData \
     --camera_indices 0 \
     --num_frames 64 \
     --epochs 4 \
-    --output_dir ./trained_models/SportFormer-EgoV4 \
+    --output_dir ./trained_models/SkillFormer \
     --batch_size 4 \
     --gradient_accumulation_steps 4 \
     --lora_r 32 \
@@ -84,12 +83,12 @@ Run inference using the following command.
 
 ```bash
 python model.py \
-    --test_annotation_path /data/users/edbianchi/ProfiVLM/annotations/debug_annotation_val.jsonl \
-    --video_root /data/users/edbianchi/EgoExoData \
+    --test_annotation_path annotation_val.jsonl \
+    --video_root /EgoExoData \
     --camera_indices 0 \
     --num_frames 32 \
-    --output_dir ./trained_models/SportFormer-EgoV3 \
-    --model_path ./trained_models/SportFormer-EgoV3 \
+    --output_dir ./trained_models/SkillFormer \
+    --model_path ./trained_models/SkillFormer \
     --batch_size 4 \
     --do_inference
 ```
