@@ -25,7 +25,7 @@ The model is fine-tuned on the [EgoExo4D](https://ego-exo4d-data.org) dataset, s
 
 ## 📁 Project Structure
 
-- `model.py`: Defines `SkillFormere`
+- `model.py`: Defines `SkillFormer`
 - `annotation/prepare_annotation.py`: Prepares data annotations in `.jsonl` format
 
 ---
@@ -44,7 +44,7 @@ Finbally, run the following command to prepare the annotations for training and 
 
 ```bash
 python prepare_annotation.py \
-  --annotation path/to/raw_annotations.json \
+  --input path/to/raw_annotations.json \
   --output path/to/annotations.jsonl
 ```
 
