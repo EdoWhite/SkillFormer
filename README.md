@@ -1,6 +1,20 @@
 # 🎯 SkillFormer: Unified Multi-View Video Understanding for Proficiency Estimation
 
-**SkillFormer** is a lightweight yet powerful model designed for estimating skill proficiency from multi-view video recordings. Built upon the TimeSformer backbone and enhanced with a novel Attentive Projector module, it provides robust video understanding in real-world, multi-camera scenarios.
+**SkillFormer** is a parameter-efficient transformer for unified multi-view proficiency estimation. Leveraging the TimeSformer backbone enhanced with our novel **CrossViewFusion** module, it fuses egocentric and exocentric video features using multi-head cross-attention and adaptive gating. Through Low-Rank Adaptation (LoRA), SkillFormer achieves **SOTA performance** on EgoExo4D while training with **4.5× fewer parameters** and **3.75× fewer epochs**—making robust skill assessment accessible for real-world deployment.
+
+<p align="center">
+<img src="./img/SkillFormer.jpeg" width="500" height="225" />
+</p>
+
+## 📊 Key Results
+
+### 🎯 State-of-the-Art Performance
+- **+16% accuracy** improvement in Ego+Exo settings
+- **+14% accuracy** improvement in Exo settings
+
+### ⚡ Computational Efficiency
+- **4.5× fewer** training parameters
+- **3.75× fewer** training epochs
 
 ---
 
@@ -19,7 +33,7 @@
 
 ## 🔧 Fine-Tuning Data
 
-The model is fine-tuned on the [EgoExo4D](https://ego-exo4d-data.org) dataset, specifically on the "Proficiency Estimation" benchmark. This benchmark includes expert commentary paired with a proficiency label. The fine-tuning process trains the model to generate a natural language analysis of proficiency and produce a final proficiency label.
+The model is fine-tuned on the [EgoExo4D](https://ego-exo4d-data.org) dataset, specifically on the "Proficiency Estimation" benchmark. This benchmark includes expert commentary paired with a proficiency label. The fine-tuning process trains the model to produce a proficiency label.
 
 ---
 
@@ -97,15 +111,25 @@ python model.py \
 
 ---
 
-## 🧪 Citation (Coming Soon)
+## 🧪 Citation
 
-If you use SkillFormer in your research or projects, please consider citing the upcoming paper.
+```
+@misc{bianchi2025skillformerunifiedmultiviewvideo,
+      title={SkillFormer: Unified Multi-View Video Understanding for Proficiency Estimation}, 
+      author={Edoardo Bianchi and Antonio Liotta},
+      year={2025},
+      eprint={2505.08665},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2505.08665}, 
+}
+```
 
 ---
 
 ## 📬 Contact
 
-For questions or collaborations, open an issue or contact us at [edoardobianchi98@gmail.com].
+For questions or collaborations, open an issue or contact us at [edbianchi@unibz.it] or [edoardobianchi98@gmail.com].
 
 ---
 
