@@ -1,21 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  
+
   <!-- Primary Meta Tags -->
   <!-- TODO: Replace with your paper title and author names -->
-  <meta name="title" content="SkillFormer: Unified Multi-View Video Understanding for Proficiency Estimation - Edoardo Bianchi, Antonio Liotta">
+  <meta name="title"
+    content="SkillFormer: Unified Multi-View Video Understanding for Proficiency Estimation - Edoardo Bianchi, Antonio Liotta">
   <!-- TODO: Write a compelling 150-160 character description of your research -->
-  <meta name="description" content="SkillFormer is a parameter-efficient transformer for unified multi-view proficiency estimation. Leveraging the TimeSformer backbone enhanced with our novel CrossViewFusion module, it fuses egocentric and exocentric video features using multi-head cross-attention and adaptive gating. Through Low-Rank Adaptation (LoRA), SkillFormer achieves SOTA performance on EgoExo4D while training with 4.5× fewer parameters and 3.75× fewer epochs—making robust skill assessment accessible for real-world deployment.">
+  <meta name="description"
+    content="SkillFormer is a parameter-efficient transformer for unified multi-view proficiency estimation. Leveraging the TimeSformer backbone enhanced with our novel CrossViewFusion module, it fuses egocentric and exocentric video features using multi-head cross-attention and adaptive gating. Through Low-Rank Adaptation (LoRA), SkillFormer achieves SOTA performance on EgoExo4D while training with 4.5× fewer parameters and 3.75× fewer epochs—making robust skill assessment accessible for real-world deployment.">
   <!-- TODO: Add 5-10 relevant keywords for your research area -->
   <meta name="keywords" content="video understanding, proficiency estimation, action quality assessment">
   <!-- TODO: List all authors -->
   <meta name="author" content="Edoardo Bianchi, Antonio Liotta">
   <meta name="robots" content="index, follow">
   <meta name="language" content="English">
-  
+
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="article">
   <!-- TODO: Replace with your institution or lab name -->
@@ -23,27 +26,21 @@
   <!-- TODO: Same as paper title above -->
   <meta property="og:title" content="SkillFormer: Unified Multi-View Video Understanding for Proficiency Estimation">
   <!-- TODO: Same as description above -->
-  <meta property="og:description" content="SkillFormer is a parameter-efficient transformer for unified multi-view proficiency estimation. Leveraging the TimeSformer backbone enhanced with our novel CrossViewFusion module, it fuses egocentric and exocentric video features using multi-head cross-attention and adaptive gating. Through Low-Rank Adaptation (LoRA), SkillFormer achieves SOTA performance on EgoExo4D while training with 4.5× fewer parameters and 3.75× fewer epochs—making robust skill assessment accessible for real-world deployment.">
+  <meta property="og:description"
+    content="SkillFormer is a parameter-efficient transformer for unified multi-view proficiency estimation. Leveraging the TimeSformer backbone enhanced with our novel CrossViewFusion module, it fuses egocentric and exocentric video features using multi-head cross-attention and adaptive gating. Through Low-Rank Adaptation (LoRA), SkillFormer achieves SOTA performance on EgoExo4D while training with 4.5× fewer parameters and 3.75× fewer epochs—making robust skill assessment accessible for real-world deployment.">
   <!-- TODO: Replace with your actual website URL -->
-  <meta property="og:url" content="https://YOUR_DOMAIN.com/YOUR_PROJECT_PAGE">
+  <meta property="og:url" content="https://edowhite.github.io/SkillFormer/">
   <!-- TODO: Create a 1200x630px preview image and update path -->
   <meta property="og:image" content="./static/images/SkillFormer.jpeg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="SkillFormer: Unified Multi-View Video Understanding for Proficiency Estimation - Research Preview">
+  <meta property="og:image:alt"
+    content="SkillFormer: Unified Multi-View Video Understanding for Proficiency Estimation - Research Preview">
   <meta property="article:published_time" content="2024-01-01T00:00:00.000Z">
   <meta property="article:author" content="Edoardo Bianchi">
   <meta property="article:section" content="Research">
-  <meta property="article:tag" content="KEYWORD1">
-  <meta property="article:tag" content="KEYWORD2">
-
-  <!-- TODO: Same as paper title above -->
-  <meta name="twitter:title" content="SkillFormer: Unified Multi-View Video Understanding for Proficiency Estimation">
-  <!-- TODO: Same as description above -->
-  <meta name="twitter:description" content="SkillFormer is a parameter-efficient transformer for unified multi-view proficiency estimation. Leveraging the TimeSformer backbone enhanced with our novel CrossViewFusion module, it fuses egocentric and exocentric video features using multi-head cross-attention and adaptive gating. Through Low-Rank Adaptation (LoRA), SkillFormer achieves SOTA performance on EgoExo4D while training with 4.5× fewer parameters and 3.75× fewer epochs—making robust skill assessment accessible for real-world deployment.">
-  <!-- TODO: Same as social preview image above -->
-  <meta name="twitter:image" content="https://YOUR_DOMAIN.com/static/images/social_preview.png">
-  <meta name="twitter:image:alt" content="SkillFormer: Unified Multi-View Video Understanding for Proficiency Estimation - Research Preview">
+  <meta property="article:tag" content="Action Quality Assessment">
+  <meta property="article:tag" content="Video Understanding">
 
   <!-- Academic/Research Specific -->
   <meta name="citation_title" content="SkillFormer: Unified Multi-View Video Understanding for Proficiency Estimation">
@@ -52,13 +49,13 @@
   <meta name="citation_publication_date" content="2025">
   <meta name="citation_conference_title" content="International Conference on Machine Vision">
   <meta name="citation_pdf_url" content=https://arxiv.org/abs/2505.08665>
-  
+
   <!-- Additional SEO -->
   <meta name="theme-color" content="#2563eb">
   <meta name="msapplication-TileColor" content="#2563eb">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  
+
   <!-- Preconnect for performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -68,22 +65,26 @@
 
 
   <!-- TODO: Replace with your paper title and authors -->
-  <title>SkillFormer: Unified Multi-View Video Understanding for Proficiency Estimation - Edoardo Bianchi, Antonio Liotta | Academic Research</title>
-  
+  <title>SkillFormer: Unified Multi-View Video Understanding for Proficiency Estimation - Edoardo Bianchi, Antonio
+    Liotta | Academic Research</title>
+
   <!-- Favicon and App Icons -->
   <link rel="icon" type="image/x-icon" href="static/images/favicon.ico">
   <link rel="apple-touch-icon" href="static/images/favicon.ico">
-  
+
   <!-- Critical CSS - Load synchronously -->
   <link rel="stylesheet" href="static/css/bulma.min.css">
   <link rel="stylesheet" href="static/css/index.css">
-  
+
   <!-- Non-critical CSS - Load asynchronously -->
-  <link rel="preload" href="static/css/bulma-carousel.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="static/css/bulma-carousel.min.css" as="style"
+    onload="this.onload=null;this.rel='stylesheet'">
   <link rel="preload" href="static/css/bulma-slider.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <link rel="preload" href="static/css/fontawesome.all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <link rel="preload" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  
+  <link rel="preload" href="static/css/fontawesome.all.min.css" as="style"
+    onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css" as="style"
+    onload="this.onload=null;this.rel='stylesheet'">
+
   <!-- Fallback for browsers that don't support preload -->
   <noscript>
     <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
@@ -91,10 +92,10 @@
     <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
   </noscript>
-  
+
   <!-- Fonts - Optimized loading -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
+
   <!-- Defer non-critical JavaScript -->
   <script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script defer src="https://documentcloud.adobe.com/view-sdk/main.js"></script>
@@ -102,7 +103,7 @@
   <script defer src="static/js/bulma-carousel.min.js"></script>
   <script defer src="static/js/bulma-slider.min.js"></script>
   <script defer src="static/js/index.js"></script>
-  
+
   <!-- Structured Data for Academic Papers -->
   <script type="application/ld+json">
   {
@@ -133,9 +134,9 @@
       "@type": "Organization",
       "name": "2025 International Conference on Machine Vision"
     },
-    "url": "https://YOUR_DOMAIN.com/YOUR_PROJECT_PAGE",
-    "image": "https://YOUR_DOMAIN.com/static/images/social_preview.png",
-    "keywords": ["KEYWORD1", "KEYWORD2", "KEYWORD3", "machine learning", "computer vision"],
+    "url": "https://edowhite.github.io/SkillFormer/",
+    "image": "https://edowhite.github.io/SkillFormer/static/images/SkillFormer.jpeg",
+    "keywords": ["Action Quality Assessment", "Proficiency Estimation", "Video Understanding"],
     "abstract": "Assessing human skill levels in complex activities is a challenging problem with applications in sports, rehabilitation, and training. In this work, we present SkillFormer, a parameter-efficient architecture for unified multi-view proficiency estimation from egocentric and exocentric videos. Building on the TimeSformer backbone, SkillFormer introduces a CrossViewFusion module that fuses view-specific features using multi-head cross-attention, learnable gating, and adaptive self-calibration. We leverage Low-Rank Adaptation to fine-tune only a small subset of parameters, significantly reducing training costs. In fact, when evaluated on the EgoExo4D dataset, SkillFormer achieves state-of-the-art accuracy in multi-view settings while demonstrating remarkable computational efficiency, using 4.5x fewer parameters and requiring 3.75x fewer training epochs than prior baselines. It excels in multiple structured tasks, confirming the value of multi-view integration for fine-grained skill assessment.",
     "citation": "@misc{bianchi2025skillformerunifiedmultiviewvideo,
       title={SkillFormer: Unified Multi-View Video Understanding for Proficiency Estimation}, 
@@ -164,7 +165,7 @@
     ]
   }
   </script>
-  
+
   <!-- Website/Organization Structured Data -->
   <script type="application/ld+json">
   {
@@ -175,6 +176,7 @@
   }
   </script>
 </head>
+
 <body>
 
 
@@ -202,7 +204,16 @@
         <a href="https://arxiv.org/abs/2509.26278" class="work-item" target="_blank">
           <div class="work-info">
             <h5>ProfVLM: A Lightweight Video-Language Model for Multi-View Proficiency Estimation</h5>
-            <p>Existing approaches to skill proficiency estimation often rely on black-box video classifiers, ignoring multi-view context and lacking explainability. We present ProfVLM, a compact vision-language model that reformulates this task as generative reasoning: it jointly predicts skill level and generates expert-like feedback from egocentric and exocentric videos. Central to our method is an AttentiveGatedProjector that dynamically fuses multi-view features, projected from a frozen TimeSformer backbone into a language model tuned for feedback generation. Trained on EgoExo4D with expert commentaries, ProfVLM surpasses state-of-the-art methods while using up to 20x fewer parameters and reducing training time by up to 60%. Our approach not only achieves superior accuracy across diverse activities, but also outputs natural language critiques aligned with performance, offering transparent reasoning. These results highlight generative vision-language modeling as a powerful new direction for skill assessment.</p>
+            <p>Existing approaches to skill proficiency estimation often rely on black-box video classifiers, ignoring
+              multi-view context and lacking explainability. We present ProfVLM, a compact vision-language model that
+              reformulates this task as generative reasoning: it jointly predicts skill level and generates expert-like
+              feedback from egocentric and exocentric videos. Central to our method is an AttentiveGatedProjector that
+              dynamically fuses multi-view features, projected from a frozen TimeSformer backbone into a language model
+              tuned for feedback generation. Trained on EgoExo4D with expert commentaries, ProfVLM surpasses
+              state-of-the-art methods while using up to 20x fewer parameters and reducing training time by up to 60%.
+              Our approach not only achieves superior accuracy across diverse activities, but also outputs natural
+              language critiques aligned with performance, offering transparent reasoning. These results highlight
+              generative vision-language modeling as a powerful new direction for skill assessment.</p>
             <span class="work-venue">Submitted & under review</span>
           </div>
           <i class="fas fa-external-link-alt"></i>
@@ -212,7 +223,19 @@
             <!-- TODO: Replace with actual paper title -->
             <h5>PATS: Proficiency-Aware Temporal Sampling for Multi-View Sports Skill Assessment</h5>
             <!-- TODO: Replace with brief description -->
-            <p>Automated sports skill assessment requires capturing fundamental movement patterns that distinguish expert from novice performance, yet current video sampling methods disrupt the temporal continuity essential for proficiency evaluation. To this end, we introduce Proficiency-Aware Temporal Sampling (PATS), a novel sampling strategy that preserves complete fundamental movements within continuous temporal segments for multi-view skill assessment. PATS adaptively segments videos to ensure each analyzed portion contains full execution of critical performance components, repeating this process across multiple segments to maximize information coverage while maintaining temporal coherence. Evaluated on the EgoExo4D benchmark with SkillFormer, PATS surpasses the state-of-the-art accuracy across all viewing configurations (+0.65% to +3.05%) and delivers substantial gains in challenging domains (+26.22% bouldering, +2.39% music, +1.13% basketball). Systematic analysis reveals that PATS successfully adapts to diverse activity characteristics-from high-frequency sampling for dynamic sports to fine-grained segmentation for sequential skills-demonstrating its effectiveness as an adaptive approach to temporal sampling that advances automated skill assessment for real-world applications.</p>
+            <p>Automated sports skill assessment requires capturing fundamental movement patterns that distinguish
+              expert from novice performance, yet current video sampling methods disrupt the temporal continuity
+              essential for proficiency evaluation. To this end, we introduce Proficiency-Aware Temporal Sampling
+              (PATS), a novel sampling strategy that preserves complete fundamental movements within continuous temporal
+              segments for multi-view skill assessment. PATS adaptively segments videos to ensure each analyzed portion
+              contains full execution of critical performance components, repeating this process across multiple
+              segments to maximize information coverage while maintaining temporal coherence. Evaluated on the EgoExo4D
+              benchmark with SkillFormer, PATS surpasses the state-of-the-art accuracy across all viewing configurations
+              (+0.65% to +3.05%) and delivers substantial gains in challenging domains (+26.22% bouldering, +2.39%
+              music, +1.13% basketball). Systematic analysis reveals that PATS successfully adapts to diverse activity
+              characteristics-from high-frequency sampling for dynamic sports to fine-grained segmentation for
+              sequential skills-demonstrating its effectiveness as an adaptive approach to temporal sampling that
+              advances automated skill assessment for real-world applications.</p>
             <!-- TODO: Replace with venue and year -->
             <span class="work-venue">2025 IEEE Sport Technology and Research Workshop</span>
           </div>
@@ -222,8 +245,19 @@
         <a href="https://ieeexplore.ieee.org/document/10972640" class="work-item" target="_blank">
           <div class="work-info">
             <h5>Gate-Shift-Pose: Enhancing Action Recognition in Sports with Skeleton Information</h5>
-            <p>This paper introduces Gate-Shift-Pose, an enhanced version of Gate-Shift-Fuse networks, designed for athlete fall classification in figure skating by integrating skeleton pose data alongside RGB frames. We evaluate two fusion strategies: early-fusion, which combines RGB frames with Gaussian heatmaps of pose keypoints at the input stage, and latefusion, which employs a multi-stream architecture with attention mechanisms to combine RGB and pose features. Experiments on the FR-FS dataset demonstrate that Gate-Shift-Pose significantly outperforms the RGB-only baseline, improving accuracy by up to 40% with ResNet18 and 20% with ResNet50. Early-fusion achieves the highest accuracy (98.08%) with ResNet50, leveraging the model's capacity for effective multimodal integration, while latefusion is better suited for lighter backbones like ResNet18. These results highlight the potential of multimodal architectures for sports action recognition and the critical role of skeleton pose information in capturing complex motion patterns.</p>
-            <span class="work-venue">2025 IEEE/CVF Winter Conference on Applications of Computer Vision Workshops (WACVW)</span>
+            <p>This paper introduces Gate-Shift-Pose, an enhanced version of Gate-Shift-Fuse networks, designed for
+              athlete fall classification in figure skating by integrating skeleton pose data alongside RGB frames. We
+              evaluate two fusion strategies: early-fusion, which combines RGB frames with Gaussian heatmaps of pose
+              keypoints at the input stage, and latefusion, which employs a multi-stream architecture with attention
+              mechanisms to combine RGB and pose features. Experiments on the FR-FS dataset demonstrate that
+              Gate-Shift-Pose significantly outperforms the RGB-only baseline, improving accuracy by up to 40% with
+              ResNet18 and 20% with ResNet50. Early-fusion achieves the highest accuracy (98.08%) with ResNet50,
+              leveraging the model's capacity for effective multimodal integration, while latefusion is better suited
+              for lighter backbones like ResNet18. These results highlight the potential of multimodal architectures for
+              sports action recognition and the critical role of skeleton pose information in capturing complex motion
+              patterns.</p>
+            <span class="work-venue">2025 IEEE/CVF Winter Conference on Applications of Computer Vision Workshops
+              (WACVW)</span>
           </div>
           <i class="fas fa-external-link-alt"></i>
         </a>
@@ -232,112 +266,291 @@
   </div>
 
   <main id="main-content">
-  <section class="hero">
-    <div class="hero-body">
-      <div class="container is-max-desktop">
-        <div class="columns is-centered">
-          <div class="column has-text-centered">
-            <!-- TODO: Replace with your paper title -->
-            <h1 class="title is-1 publication-title">SkillFormer: Unified Multi-View Video Understanding for Proficiency Estimation</h1>
-            <div class="is-size-5 publication-authors">
-              <!-- TODO: Replace with your paper authors and their personal links -->
-              <span class="author-block">
-                <a href="https://web.whiteapp.cloud" target="_blank">Edoardo Bianchi</a><sup></sup>,</span>
+    <section class="hero">
+      <div class="hero-body">
+        <div class="container is-max-desktop">
+          <div class="columns is-centered">
+            <div class="column has-text-centered">
+              <!-- TODO: Replace with your paper title -->
+              <h1 class="title is-1 publication-title">SkillFormer: Unified Multi-View Video Understanding for
+                Proficiency Estimation</h1>
+              <div class="is-size-5 publication-authors">
+                <!-- TODO: Replace with your paper authors and their personal links -->
                 <span class="author-block">
-                  <a href="https://www.unibz.it/it/faculties/engineering/academic-staff/person/41903-antonio-liotta" target="_blank">Antonio Liotta</a><sup>
+                  <a href="https://web.whiteapp.cloud" target="_blank">Edoardo Bianchi</a><sup></sup>,</span>
+                <span class="author-block">
+                  <a href="https://www.unibz.it/it/faculties/engineering/academic-staff/person/41903-antonio-liotta"
+                    target="_blank">Antonio Liotta</a><sup>
                   </sup></span>
+                </span>
+              </div>
+
+              <div class="is-size-5 publication-authors">
+                <!-- TODO: Replace with your institution and conference/journal info -->
+                <span class="author-block">Free University of Bozen-Bolzano<br>International Machine Vision Conference
+                  2025</span>
+
+              </div>
+
+              <div class="column has-text-centered">
+                <div class="publication-links">
+                  <!-- TODO: Update with your arXiv paper ID -->
+                  <span class="link-block">
+                    <a href="https://arxiv.org/pdf/2505.08665.pdf" target="_blank"
+                      class="external-link button is-normal is-rounded is-dark">
+                      <span class="icon">
+                        <i class="fas fa-file-pdf"></i>
+                      </span>
+                      <span>Paper</span>
+                    </a>
                   </span>
-                  </div>
-
-                  <div class="is-size-5 publication-authors">
-                    <!-- TODO: Replace with your institution and conference/journal info -->
-                    <span class="author-block">Free University of Bozen-Bolzano<br>2025 International Machine Vision Conference</span>
-                    
-                  </div>
-
-                  <div class="column has-text-centered">
-                    <div class="publication-links">
-                         <!-- TODO: Update with your arXiv paper ID -->
-                      <span class="link-block">
-                        <a href="https://arxiv.org/pdf/2505.08665.pdf" target="_blank"
-                        class="external-link button is-normal is-rounded is-dark">
-                        <span class="icon">
-                          <i class="fas fa-file-pdf"></i>
-                        </span>
-                        <span>Paper</span>
-                      </a>
-                    </span>
 
                   <!-- TODO: Replace with your GitHub repository URL -->
                   <span class="link-block">
                     <a href="https://github.com/EdoWhite/SkillFormer" target="_blank"
-                    class="external-link button is-normal is-rounded is-dark">
-                    <span class="icon">
-                      <i class="fab fa-github"></i>
-                    </span>
-                    <span>Code</span>
-                  </a>
-                </span>
-
-                <!-- TODO: Update with your arXiv paper ID -->
-                <span class="link-block">
-                  <a href="https://arxiv.org/abs/2505.08665" target="_blank"
-                  class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                    <i class="ai ai-arxiv"></i>
+                      class="external-link button is-normal is-rounded is-dark">
+                      <span class="icon">
+                        <i class="fab fa-github"></i>
+                      </span>
+                      <span>Code</span>
+                    </a>
                   </span>
-                  <span>arXiv</span>
-                </a>
-              </span>
+
+                  <!-- TODO: Update with your arXiv paper ID -->
+                  <span class="link-block">
+                    <a href="https://arxiv.org/abs/2505.08665" target="_blank"
+                      class="external-link button is-normal is-rounded is-dark">
+                      <span class="icon">
+                        <i class="ai ai-arxiv"></i>
+                      </span>
+                      <span>arXiv</span>
+                    </a>
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-
-<!-- Paper abstract -->
-<section class="section hero is-light">
-  <div class="container is-max-desktop">
-    <div class="columns is-centered has-text-centered">
-      <div class="column is-four-fifths">
-        <h2 class="title is-3">Abstract</h2>
-        <div class="content has-text-justified">
-          <!-- TODO: Replace with your paper abstract -->
+    <!-- Teaser video-->
+    <section class="hero teaser">
+      <div class="container is-max-desktop">
+        <div class="hero-body">
           <p>
-            Assessing human skill levels in complex activities is a challenging problem with applications in sports, rehabilitation, and training. In this work, we present SkillFormer, a parameter-efficient architecture for unified multi-view proficiency estimation from egocentric and exocentric videos. Building on the TimeSformer backbone, SkillFormer introduces a CrossViewFusion module that fuses view-specific features using multi-head cross-attention, learnable gating, and adaptive self-calibration. We leverage Low-Rank Adaptation to fine-tune only a small subset of parameters, significantly reducing training costs. In fact, when evaluated on the EgoExo4D dataset, SkillFormer achieves state-of-the-art accuracy in multi-view settings while demonstrating remarkable computational efficiency, using 4.5x fewer parameters and requiring 3.75x fewer training epochs than prior baselines. It excels in multiple structured tasks, confirming the value of multi-view integration for fine-grained skill assessment.
+            <img src="./static/images/SkillFormer.jpeg" alt="SkillFormer" class="blend-img-background center-image"
+              style="max-width: 100%; height: auto;" loading="lazy">
+          </p>
+          <br>
+          <p>
+            Multi-view video inputs (one egocentric and up to four exocentric) are processed through a shared
+            TimeSformer backbone fine-tuned with LoRA. Features are fused using the CrossViewFusion
+            module and passed to a classification head.
           </p>
         </div>
       </div>
-    </div>
-  </div>
-</section>
-<!-- End paper abstract -->
+    </section>
+    <!-- End teaser video -->
 
 
-
-
-
-
-
-
-
-
-
-
-<!--BibTex citation -->
-  <section class="section" id="BibTeX">
-    <div class="container is-max-desktop content">
-      <div class="bibtex-header">
-        <h2 class="title">BibTeX</h2>
-        <button class="copy-bibtex-btn" onclick="copyBibTeX()" title="Copy BibTeX to clipboard">
-          <i class="fas fa-copy"></i>
-          <span class="copy-text">Copy</span>
-        </button>
+    <!-- Paper abstract -->
+    <section class="section hero is-light">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered has-text-centered">
+          <div class="column is-four-fifths">
+            <h2 class="title is-3">Abstract</h2>
+            <div class="content has-text-justified">
+              <!-- TODO: Replace with your paper abstract -->
+              <p>
+                Assessing human skill levels in complex activities is a challenging problem with applications in sports,
+                rehabilitation, and training. In this work, we present SkillFormer, a parameter-efficient architecture
+                for unified multi-view proficiency estimation from egocentric and exocentric videos. Building on the
+                TimeSformer backbone, SkillFormer introduces a CrossViewFusion module that fuses view-specific features
+                using multi-head cross-attention, learnable gating, and adaptive self-calibration. We leverage Low-Rank
+                Adaptation to fine-tune only a small subset of parameters, significantly reducing training costs. In
+                fact, when evaluated on the EgoExo4D dataset, SkillFormer achieves state-of-the-art accuracy in
+                multi-view settings while demonstrating remarkable computational efficiency, using 4.5x fewer parameters
+                and requiring 3.75x fewer training epochs than prior baselines. It excels in multiple structured tasks,
+                confirming the value of multi-view integration for fine-grained skill assessment.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-      <pre id="bibtex-code"><code>@misc{bianchi2025skillformerunifiedmultiviewvideo,
+    </section>
+    <!-- End paper abstract -->
+
+
+    <section class="section hero is-small">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column is-full">
+            <div class="content">
+              <h2 class="title is-3">CrossViewFusion Module</h2>
+              <p>
+                <img src="./static/images/CrossViewFusion.jpeg" alt="Directional Weight Score"
+                  class="blend-img-background center-image"
+                  style="max-width: 100%; height: auto; display: block; margin: 0 auto;" loading="lazy">
+              </p>
+              <p>
+                Detailed architecture of the CrossViewFusion module. Input features
+                (<i>B</i>,<i>V</i>,<i>d</i>) undergo: (1) Layer normalization
+                per view, (2) Multi-head cross-attention enabling each view to attend to all others,
+                (3) View aggregation via mean pooling, (4) Feed-forward transformation with GELU activation,
+                (5) Learnable gating mechanism <i>g</i> = σ(Linear(<i>h</i>)) for
+                selective feature modulation, (6) Final projection, and (7) Adaptive self-calibration
+                using learnable statistics to align with classification space.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+
+    <section class="section hero is-small is-light">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column is-full">
+            <div class="content">
+              <h2 class="title is-3">Comparison with State-of-the-Art Methods</h2>
+              <p>
+                <img src="./static/images/TableComparison.png" alt="Comparison with State-of-the-Art"
+                  class="blend-img-background center-image"
+                  style="max-width: 75%; height: auto; display: block; margin: 0 auto;" loading="lazy">
+              </p>
+              <p>
+              <p>
+                SkillFormer achieves state-of-the-art classification accuracy in both Exos (46.3%) and Ego+Exos (47.5%)
+                settings, outperforming the best TimeSformer baseline by up to 16.4%. In contrast to baselines—which
+                train separate models for egocentric and exocentric inputs and perform late fusion at
+                inference—SkillFormer uses a single unified model for each configuration, simplifying the architecture
+                and inference pipeline.
+              </p>
+
+              <p>
+                Beyond improved accuracy, SkillFormer demonstrates exceptional computational efficiency, using 4.5x
+                fewer trainable parameters (27M vs. 121M) and requiring 3.75x fewer training epochs (4 vs. 15) compared
+                to TimeSformer baselines. Furthermore, we do not apply multi-crop testing, reducing computational
+                overhead while maintaining superior performance. These results highlight SkillFormer's ability to
+                achieve both higher accuracy and greater compute-efficiency.
+              </p>
+
+              <p>
+                It is worth noting that the proficiency label distribution is notably imbalanced, skewed toward
+                intermediate and late experts due to targeted recruitment of skilled participants. This may bias overall
+                accuracy by underrepresenting novice classes. Random and majority-class baselines perform significantly
+                worse (24.9% and 31.1% respectively), underscoring the inherent complexity of the skill assessment task.
+              </p>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section hero is-small">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column is-full">
+            <div class="content">
+              <h2 class="title is-3">Per-Scenario Performance</h2>
+              <p>
+                <img src="./static/images/TableDomain.png" alt="Per-Scenario Results"
+                  class="blend-img-background center-image"
+                  style="max-width: 75%; height: auto; display: block; margin: 0 auto;" loading="lazy">
+              </p>
+              <p>
+              <p>
+                SkillFormer consistently outperforms baseline models in the Ego+Exos setting for structured and
+                physically grounded activities such as Basketball (77.88%) and Cooking (60.53%). These domains benefit
+                from synchronized egocentric and exocentric perspectives, which enable better modeling of spatial
+                layouts and temporally extended actions. The fusion of multi-view signals allows SkillFormer to exploit
+                cross-perspective cues, such as object-hand interactions and full-body movement trajectories.
+              </p>
+
+              <p>
+                Interestingly, view-specific advantages emerge in certain domains. In Music, the Ego-only configuration
+                achieves the highest accuracy (72.41%), suggesting that head-mounted views sufficiently capture detailed
+                instrument manipulation. In Bouldering, the Exos-only configuration outperforms with 33.52% accuracy,
+                indicating that third-person perspectives better capture full-body spatial positioning and climbing
+                technique assessment. This highlights SkillFormer's flexibility to adapt to view-specific signal
+                quality.
+              </p>
+
+              <p>
+                However, subjective domains like Dancing reveal limitations: SkillFormer's Ego+Exos accuracy (13.68%)
+                falls significantly below both the majority baseline (51.61%) and the baseline Ego model (55.65%). This
+                indicates that tasks with high intra-class variability and weak structure may not benefit from
+                multi-view fusion, or may require additional modalities such as audio to disambiguate subtle skill
+                indicators. These trends underscore that SkillFormer is particularly effective in domains requiring
+                precise spatial-temporal reasoning and multi-view integration.
+              </p>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section hero is-small is-light">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column is-full">
+            <div class="content">
+              <h2 class="title is-3">Architecture Configuration</h2>
+              <p>
+                <img src="./static/images/TableParams.png" alt="Architecture Configuration"
+                  class="blend-img-background center-image"
+                  style="max-width: 75%; height: auto; display: block; margin: 0 auto;" loading="lazy">
+              </p>
+              <p>
+              <p>
+                As the number of views increases, our design prioritizes efficiency without compromising accuracy. We
+                strategically reduce the number of frames per view (32→16)—preserving the temporal span with fewer
+                sampled tokens—while proportionally increasing the LoRA rank (32→64), alpha (64→128), and hidden
+                dimension (1536→2560). This trade-off compensates for reduced per-view tokens by enabling richer
+                cross-view transformations through enhanced adapter capacity.
+              </p>
+
+              <p>
+                Our choice of LoRA rank and fusion dimensionality is not arbitrary. Higher ranks allow the adapter to
+                express richer transformations across views, compensating for the reduced token budget. Empirically,
+                increasing these parameters moderately yields significant gains in accuracy while maintaining training
+                efficiency within tractable computational budgets. SkillFormer-Ego+Exos achieves 47.5% accuracy with
+                only 27M trainable parameters—a 4.5x reduction compared to full fine-tuning of the 121M parameter
+                TimeSformer backbone—demonstrating the effectiveness of low-rank adaptation and targeted fusion.
+              </p>
+
+              <p>
+                This design reflects a key motivation behind SkillFormer: enabling scalable, parameter-efficient skill
+                recognition across multi-view egocentric and exocentric inputs. By balancing frame sampling, adapter
+                capacity, and fusion complexity, we achieve state-of-the-art performance while maintaining computational
+                tractability for real-world deployment scenarios.
+              </p>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+
+
+    <!--BibTex citation -->
+    <section class="section" id="BibTeX">
+      <div class="container is-max-desktop content">
+        <div class="bibtex-header">
+          <h2 class="title">BibTeX</h2>
+          <button class="copy-bibtex-btn" onclick="copyBibTeX()" title="Copy BibTeX to clipboard">
+            <i class="fas fa-copy"></i>
+            <span class="copy-text">Copy</span>
+          </button>
+        </div>
+        <pre id="bibtex-code"><code>@misc{bianchi2025skillformerunifiedmultiviewvideo,
       title={SkillFormer: Unified Multi-View Video Understanding for Proficiency Estimation}, 
       author={Edoardo Bianchi and Antonio Liotta},
       year={2025},
@@ -346,35 +559,40 @@
       primaryClass={cs.CV},
       url={https://arxiv.org/abs/2505.08665}, 
 }
-}</code></pre>
-    </div>
-</section>
-<!--End BibTex citation -->
+</code></pre>
+      </div>
+    </section>
+    <!--End BibTex citation -->
 
 
-  <footer class="footer">
-  <div class="container">
-    <div class="columns is-centered">
-      <div class="column is-8">
-        <div class="content">
+    <footer class="footer">
+      <div class="container">
+        <div class="columns is-centered">
+          <div class="column is-8">
+            <div class="content">
 
-          <p>
-            This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a> which was adopted from the <a href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
-            You are free to borrow the source code of this website, we just ask that you link back to this page in the footer. <br> This website is licensed under a <a rel="license"  href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative
-            Commons Attribution-ShareAlike 4.0 International License</a>.
-          </p>
+              <p>
+                This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template"
+                  target="_blank">Academic Project Page Template</a> which was adopted from the <a
+                  href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
+                You are free to borrow the source code of this website, we just ask that you link back to this page in
+                the footer. <br> This website is licensed under a <a rel="license"
+                  href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative
+                  Commons Attribution-ShareAlike 4.0 International License</a>.
+              </p>
 
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-</footer>
+    </footer>
 
-<!-- Statcounter tracking code -->
-  
-<!-- You can add a tracker to track page visits by creating an account at statcounter.com -->
+    <!-- Statcounter tracking code -->
+
+    <!-- You can add a tracker to track page visits by creating an account at statcounter.com -->
 
     <!-- End of Statcounter Code -->
 
-  </body>
-  </html>
+</body>
+
+</html>
