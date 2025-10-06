@@ -3,3 +3,8 @@ trained_models/
 trained_extractors/
 wandb/
 /pycache/*
+annotations/annotation_test_4k.jsonl
+annotations/annotation_train_4k.jsonl
+annotations/annotation_val_4k.jsonl
+annotations/test.jsonl
+annotations/train.jsonl
