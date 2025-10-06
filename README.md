@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-<img src="./img/SkillFormer.jpeg" width="500" height="225" />
+<img src="./img/SkillFormer.jpeg" width="" height="" />
 </p>
 
 ## 📊 Key Results
