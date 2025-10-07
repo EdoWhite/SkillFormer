@@ -2,6 +2,8 @@
 
 **SkillFormer** is a parameter-efficient transformer for unified multi-view proficiency estimation. Leveraging the TimeSformer backbone enhanced with our novel **CrossViewFusion** module, it fuses egocentric and exocentric video features using multi-head cross-attention and adaptive gating. Through Low-Rank Adaptation (LoRA), SkillFormer achieves **SOTA performance** on EgoExo4D while training with **4.5× fewer parameters** and **3.75× fewer epochs**—making robust skill assessment accessible for real-world deployment.
 
+**Paper accepted at:** 2025 International Machine Vision Conference
+
 <p align="center">
 📄 <a href="https://arxiv.org/abs/2505.08665">Read the Paper</a> | 🌐 <a href="https://edowhite.github.io/SkillFormer">Project Page</a>
 </p>
